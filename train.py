@@ -32,7 +32,12 @@ tf.flags.DEFINE_float("l2_reg_lambda",0.0,"L2 regularization lambda")
 tf.flags.DEFINE_boolean("log_device_placement",False,"log placement of ops on devices")
 tf.flags.DEFINE_boolean("allow_soft_placement",False,"allow device soft device placement")
 
-
+# Training parameters
+tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
 
 #Model paras
 tf.flags.DEFINE_float("")
@@ -119,8 +124,26 @@ with tf.Graph().as_default():
     
     #Train summaries
     train_summary_op=tf.summary.merge([loss_summary,acc_summary,grad_summaries_merged])
-    train_summary_dir=os.path.join(os.path.curdir,"")
+    train_summary_dir=os.path.join(os.path.curdir,"summaries","train")
+    train_summary_writer=tf.summary.Writer(train_summary_dir,sess.graph)
     
+    #dev summaries
+    dev_summary_op=tf.summary.merge([loss_summary,acc_summary])
+    dev_summary_dir=os.path.join(os.path.curdir,"summaries","dev")
+    dev_summary_writer=tf.summary.Writer(dev_summary_dir,sess.graph)
+    
+    #checkpoint directory.TF assumes the directory already exists, so we need to create it.
+    checkpoint_dir=os.path.abspath(os.path.join(out_dir,"checkpoints"))
+    checkpoint_prefix=os.path.join(checkpoint_dir,"model")
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+    saver=tf.train.Saver(tf.global_variables(),max_to_keep=FLAGS.num_checkpoints)
+    
+    #写入vocabulary
+    vocab_processor.save(os.path.join(out_dir,"vocab"))
+    
+    #init
+    sess.run(tf.global_variables_initializer())
 
 
 
