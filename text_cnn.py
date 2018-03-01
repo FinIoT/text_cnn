@@ -64,7 +64,7 @@ class TextCNN:
             self.predictions=tf.argmax(self.scores,1,name="predictions")
         #loss
         losses=tf.nn.softmax_cross_entropy_with_logits(logits=self.scores,labels=self.input_y)
-        #？？？正则化时不要除以每batch的个数m吗？不需要, lambda和lambda/m其实是一样的
+        #？？？正则化时不要除以每batch的个数m吗？不需要, lambda和lambda/m都是常数，其实是一样的
         self.loss=tf.reduce_mean(losses)+l2_reg_lambda*l2_loss
         
         #Accuracy
