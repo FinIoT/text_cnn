@@ -48,6 +48,7 @@ def batch_iter(data,batch_size,num_epoch,shuffle=True):
     为数据集生成 批迭代器。
     注意：每次遍历完整个整个数据集后（即每个epoch）,最后一批数据因不能整除个数可能少于前面批次的个数，无需补零处理
     使用 for epoch和 for num_batch 两重循环即可生成批迭代器
+    注意data数据类型应为列表，所以如有用zip(X,Y)，则需需要转化为list(zip(X,Y))
     """
     data=np.array(data)
     data_size=len(data)

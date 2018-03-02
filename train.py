@@ -147,8 +147,8 @@ with tf.Graph().as_default():
         
         def train_step(x_batch,y_batch):
             feed_dict={
-                    cnn.input_x:x_batch
-                    cnn.input_y:y_batch
+                    cnn.input_x:x_batch,
+                    cnn.input_y:y_batch,
                     cnn.dropout_keep_prob:FLAGS.dropout_keep_prob
                     }
             _,step,summaries,loss,accuracy=sess.run(
@@ -158,6 +158,30 @@ with tf.Graph().as_default():
             time_str=datetime.datetime.now().isoformat()
             print("{}:step{},loss{:g},acc{:g}".format(time_str,step,loss,accuracy))
             train_summary_writer.add_summary(summaries,step)
+        def dev_step(x_batch,y_batch,writer=None):
+            feed_dict={
+                    cnn.input_x:x_batch,
+                    cnn.input_y:y_batch,
+                    cnn.dropout_keep_prob:1.0
+                    }
+            step,summaries,loss,accuracy=sess.run(
+                    [global_step,dev_summary_op,cnn.loss,cnn.accuracy],
+                    feed_dict
+                    )
+            time_str=datetime.datetime.now().isoformat()
+            print("{}:step{},loss{:g},acc{:g}".format(time_str,step,loss,accuracy))
+            if writer:
+                writer.add_summary(summaries,step)
+        
+        
+        #Genearte batches
+        batches=data_helpers.batch_iter(list(zip(x_train,y_train)),FLAGS.batch_size,FLAGS.num_epoch)
+        
+        for batch in batches:
+            x_batch,y_batch=zip(*batch)
+            train_step(x_batch,y_batch)
+            current_step=tf.train.global_step(sess,global_step)
+            if current_step%FLAGS.evaluate_every
 
 
 
