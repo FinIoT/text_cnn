@@ -16,7 +16,7 @@ class TextCNN:
         self.input_y=tf.placeholder(tf.float32,[None,num_classes],name="input_y")
         self.dropout_keep_prob=tf.placeholder(tf.float32,name="dropout_keep_prob")
         
-        #keeping trace of l2 regularization loss(optional),为什么不设置成self.形式？
+        #keeping trace of l2 regularization loss(optional)
         l2_loss=tf.constant(0.0)
         
         #embedding layer
@@ -43,7 +43,7 @@ class TextCNN:
                 pooled=tf.nn.max_pool(h,[1,sequence_length-filter_size+1,1,1],strides=[1,1,1,1],padding="VALID",name="pooling")
                 pooled_outputs.append(pooled)
         #!!!注意卷积池化后pooled维度和输入一样是4维度的，N,H,W,C,需要将Vector串联起来，然后扁平化。
-        #？？？关键是如何确定在哪里串联，可以令N=1，那么一张H*W的数据进来，经过C=num_filters卷积，池化后只剩下C的维度上
+        #???关键是如何确定在哪里串联，可以令N=1，那么一张H*W的数据进来，经过C=num_filters卷积，池化后只剩下C的维度上
         self.h_pool=tf.concat(pooled_outputs,3)
         num_filters_total=num_filters*len(filter_sizes)
         self.h_pool_flat=tf.reshape(self.h_pool,[-1,num_filters_total])

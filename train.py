@@ -5,7 +5,7 @@ Created on Fri Feb 16 21:48:31 2018
 @author: LIKS
 """
 
-import tensorlfow as tf
+import tensorflow as tf
 from tensorflow.contrib import learn
 import numpy as np
 import os 
@@ -30,7 +30,7 @@ tf.flags.DEFINE_float("l2_reg_lambda",0.0,"L2 regularization lambda")
 
 #MISC Paras
 tf.flags.DEFINE_boolean("log_device_placement",False,"log placement of ops on devices")
-tf.flags.DEFINE_boolean("allow_soft_placement",False,"allow device soft device placement")
+tf.flags.DEFINE_boolean("allow_soft_placement",True,"allow device soft device placement")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
@@ -39,8 +39,7 @@ tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after 
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
 
-#Model paras
-tf.flags.DEFINE_float("")
+
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -78,21 +77,20 @@ del x_text,x,y,x_shuffled,y_shuffled
 
 print("Vocabulary Size:{:d}".format(len(vocab_processor.vocabulary_)))
 print("Train/test split:{:d}/{:d}".format(len(y_train),len(y_dev)))
-
 #Training.........................
 
 with tf.Graph().as_default():
     session_conf=tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
-    sess=tf.Session(Config=session_conf)
+    sess=tf.Session(config=session_conf)
     with sess.as_default():
         cnn=TextCNN(
-                sequence_length=x_train.shape(1),
-                num_classes=y_train.shape(1),
+                sequence_length=x_train.shape[1],
+                num_classes=y_train.shape[1],
                 vocab_size=len(vocab_processor.vocabulary_),
                 embedding_size=FLAGS.embedding_dim,
-                filter_sizes=list(map(int,FLAGS.filter_sizes.spilt(","))),
+                filter_sizes=list(map(int,FLAGS.filter_sizes.split(","))),
                 num_filters=FLAGS.num_filters, 
                 l2_reg_lambda=FLAGS.l2_reg_lambda
                 )
@@ -125,12 +123,12 @@ with tf.Graph().as_default():
         #Train summaries
         train_summary_op=tf.summary.merge([loss_summary,acc_summary,grad_summaries_merged])
         train_summary_dir=os.path.join(os.path.curdir,"summaries","train")
-        train_summary_writer=tf.summary.Writer(train_summary_dir,sess.graph)
+        train_summary_writer=tf.summary.FileWriter(train_summary_dir,sess.graph)
         
         #dev summaries
         dev_summary_op=tf.summary.merge([loss_summary,acc_summary])
         dev_summary_dir=os.path.join(os.path.curdir,"summaries","dev")
-        dev_summary_writer=tf.summary.Writer(dev_summary_dir,sess.graph)
+        dev_summary_writer=tf.summary.FileWriter(dev_summary_dir,sess.graph)
         
         #checkpoint directory.TF assumes the directory already exists, so we need to create it.
         checkpoint_dir=os.path.abspath(os.path.join(out_dir,"checkpoints"))
@@ -175,13 +173,20 @@ with tf.Graph().as_default():
         
         
         #Genearte batches
-        batches=data_helpers.batch_iter(list(zip(x_train,y_train)),FLAGS.batch_size,FLAGS.num_epoch)
+        batches=data_helpers.batch_iter(list(zip(x_train,y_train)),FLAGS.batch_size,FLAGS.num_epochs)
         
         for batch in batches:
             x_batch,y_batch=zip(*batch)
             train_step(x_batch,y_batch)
             current_step=tf.train.global_step(sess,global_step)
-            if current_step%FLAGS.evaluate_every
+            if current_step%FLAGS.evaluate_every==0:
+                print("\nEvaluation:")
+                dev_step(x_dev,y_dev,writer=dev_summary_writer)
+                print("")
+            if current_step%FLAGS.checkpoint_every==0:
+                path=saver.save(sess,checkpoint_prefix,global_step=current_step)
+                print("Saved model checkpoint to {}\n".format(path))
+                
 
 
 
