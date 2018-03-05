@@ -23,6 +23,7 @@ class TextCNN:
         with tf.device("/cpu:0"),tf.name_scope("embedding"):
             #不需要设置W的数据类型吗？由后面的random_uniform决定。placeholer因为要预留位置，所以要写数据类型
             self.W=tf.Variable(tf.random_uniform([vocab_size,embedding_size],-1,1),name="W")
+            
             #？？？VocabularyProcessor将文本转化为从1~n的整数，但数据中有很多是由0补齐的，0对应的都是W第一行向量，按理应该对应0啊
             self.embedding_char=tf.nn.embedding_lookup(self.W,self.input_x)
             self.embedding_char_expanded=tf.expand_dims(self.embedding_char,-1)
@@ -36,9 +37,9 @@ class TextCNN:
                 filter_shape=[filter_size,embedding_size,1,num_filters]
                 W=tf.Variable(tf.truncated_normal(filter_shape,stddev=0.1),name="W_filter")
                 b=tf.Variable(tf.constant(0.1,shape=[num_filters]),name="b_filter")
-                conv=tf.nn.conv2d(self.embedding_char_expanded,W,strides=[1,1,1,1],padding="VALID",name="conv")
+                self.conv=tf.nn.conv2d(self.embedding_char_expanded,W,strides=[1,1,1,1],padding="VALID",name="conv")
                 #apply non-linearity, tf.nn.bias_add, b is 1D tensor. unlike tf.add
-                h=tf.nn.relu(tf.nn.bias_add(conv,b),name="relu")
+                h=tf.nn.relu(tf.nn.bias_add(self.conv,b),name="relu")
                 #注意k_size第二个值
                 pooled=tf.nn.max_pool(h,[1,sequence_length-filter_size+1,1,1],strides=[1,1,1,1],padding="VALID",name="pooling")
                 pooled_outputs.append(pooled)

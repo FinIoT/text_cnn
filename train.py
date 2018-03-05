@@ -29,12 +29,14 @@ tf.flags.DEFINE_float("dropout_keep_prob",0.5,"Dropout keep probability")
 tf.flags.DEFINE_float("l2_reg_lambda",0.0,"L2 regularization lambda")
 
 #MISC Paras
+#打印设备分配日志
 tf.flags.DEFINE_boolean("log_device_placement",False,"log placement of ops on devices")
+#若指定设备不存在，允许TF自动分配设备
 tf.flags.DEFINE_boolean("allow_soft_placement",True,"allow device soft device placement")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 1, "Number of training epochs (default: 20)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -72,8 +74,8 @@ dev_sample_index=-1*int(FLAGS.dev_sample_percentage*len(y))
 x_train,x_dev=x_shuffled[:dev_sample_index],x_shuffled[dev_sample_index:]
 y_train,y_dev=y_shuffled[:dev_sample_index],y_shuffled[dev_sample_index:]
 
-#比代码多删了一个x_text
-del x_text,x,y,x_shuffled,y_shuffled
+#这里实际上x_text也可删除
+del x,y,x_shuffled,y_shuffled
 
 print("Vocabulary Size:{:d}".format(len(vocab_processor.vocabulary_)))
 print("Train/test split:{:d}/{:d}".format(len(y_train),len(y_dev)))
@@ -137,7 +139,7 @@ with tf.Graph().as_default():
             os.makedirs(checkpoint_dir)
         saver=tf.train.Saver(tf.global_variables(),max_to_keep=FLAGS.num_checkpoints)
         
-        #写入vocabulary
+        #写入vocabulary，有啥用呢？
         vocab_processor.save(os.path.join(out_dir,"vocab"))
         
         #init
@@ -149,12 +151,14 @@ with tf.Graph().as_default():
                     cnn.input_y:y_batch,
                     cnn.dropout_keep_prob:FLAGS.dropout_keep_prob
                     }
-            _,step,summaries,loss,accuracy=sess.run(
-                    [train_op,global_step,train_summary_op,cnn.loss,cnn.accuracy],
+            _,step,summaries,loss,accuracy,input_x,conv=sess.run(
+                    [train_op,global_step,train_summary_op,cnn.loss,cnn.accuracy,cnn.input_x,cnn.conv],
                     feed_dict
                     )
             time_str=datetime.datetime.now().isoformat()
-            print("{}:step{},loss{:g},acc{:g}".format(time_str,step,loss,accuracy))
+            print("{}:step{},loss{:g},acc{:g} \n".format(time_str,step,loss,accuracy))
+            print("input_x:{}\n".format(input_x))
+            print("Conv:{}\n".format(conv))
             train_summary_writer.add_summary(summaries,step)
         def dev_step(x_batch,y_batch,writer=None):
             feed_dict={
