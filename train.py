@@ -36,7 +36,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement",True,"allow device soft device pl
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 1, "Number of training epochs (default: 20)")
+tf.flags.DEFINE_integer("num_epochs", 12, "Number of training epochs (default: 20)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
