@@ -8,6 +8,8 @@ Created on Fri Feb 16 21:48:31 2018
 import tensorflow as tf
 from tensorflow.contrib import learn
 import numpy as np
+#将数据全部打印出来利于调试，当然速度会很慢。
+#np.set_printoptions(threshold=1e6)
 import os 
 import time
 import datetime
@@ -36,7 +38,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement",True,"allow device soft device pl
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 12, "Number of training epochs (default: 20)")
+tf.flags.DEFINE_integer("num_epochs", 15, "Number of training epochs (default: 20)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -139,7 +141,7 @@ with tf.Graph().as_default():
             os.makedirs(checkpoint_dir)
         saver=tf.train.Saver(tf.global_variables(),max_to_keep=FLAGS.num_checkpoints)
         
-        #写入vocabulary，有啥用呢？
+        #???写入vocabulary，有啥用呢？该字典是随机初始化的，训练好后可以用于预测
         vocab_processor.save(os.path.join(out_dir,"vocab"))
         
         #init
@@ -151,14 +153,15 @@ with tf.Graph().as_default():
                     cnn.input_y:y_batch,
                     cnn.dropout_keep_prob:FLAGS.dropout_keep_prob
                     }
-            _,step,summaries,loss,accuracy,input_x,conv=sess.run(
-                    [train_op,global_step,train_summary_op,cnn.loss,cnn.accuracy,cnn.input_x,cnn.conv],
+            _,step,summaries,loss,accuracy,input_x,conv,pool=sess.run(
+                    [train_op,global_step,train_summary_op,cnn.loss,cnn.accuracy,cnn.input_x,cnn.conv,tf.squeeze(cnn.h_pool_flat)],
                     feed_dict
                     )
             time_str=datetime.datetime.now().isoformat()
             print("{}:step{},loss{:g},acc{:g} \n".format(time_str,step,loss,accuracy))
-            print("input_x:{}\n".format(input_x))
-            print("Conv:{}\n".format(conv))
+            #print("input_x:{}\n".format(input_x))
+            #print("Conv:{}\n".format(conv))
+            #print("pool:{}\n".format(pool))
             train_summary_writer.add_summary(summaries,step)
         def dev_step(x_batch,y_batch,writer=None):
             feed_dict={

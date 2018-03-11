@@ -22,7 +22,7 @@ class TextCNN:
         #embedding layer
         with tf.device("/cpu:0"),tf.name_scope("embedding"):
             #不需要设置W的数据类型吗？由后面的random_uniform决定。placeholer因为要预留位置，所以要写数据类型
-            self.W=tf.Variable(tf.random_uniform([vocab_size,embedding_size],-1,1),name="W")
+            self.W=tf.Variable(tf.random_uniform([vocab_size,embedding_size],0,1),name="W")
             
             #？？？VocabularyProcessor将文本转化为从1~n的整数，但数据中有很多是由0补齐的，0对应的都是W第一行向量，按理应该对应0啊
             self.embedding_char=tf.nn.embedding_lookup(self.W,self.input_x)
