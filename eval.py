@@ -51,9 +51,24 @@ else:
     y_test=[1,0]
     
 ##map data into vocabulary
-vocab_path=os.path.join(os.path.curdir,"填入自己的路劲","vocab")
+vocab_path=os.path.join(os.path.curdir,"填入自己的路径","vocab")
+vocab_processor=learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+
+x_test=np.array(list(vocab_processor.transform(x_raw)))
+
+print("\nEvaluating...\n")
 
 #Import checkpoint, graph, restore data
+checkpoint_file=tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+graph=tf.Graph()
+with graph.as_default():
+    session_conf=tf.ConfigProto(
+            allow_soft_placement=FLAGS.allow_soft_placement,
+            log_device_placement=FLAGS.log_device_placement)
+    sess=tf.Session(config=session_conf)
+    with sess.as_default():
+        saver=tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+        saver.restore(sess,checkpoint_file)
 
 #get input_x...
 
