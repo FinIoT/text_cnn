@@ -69,9 +69,29 @@ with graph.as_default():
     with sess.as_default():
         saver=tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(sess,checkpoint_file)
-
 #get input_x...
-
+        input_x=graph.get_operation_by_name("input_x").outputs[0]
+        #input_y=graph.get_operation_by_name("input_y").outputs[0]
+        dropout_keep_prob=graph.get_operation_by_name("dropout_keep_prob").outputs[0]
+#tensor we want to evaluate...
+        predictions=graph.get_operation_by_name("output/predictions").outputs[0]
+        #Generate batches for one epoch
+        batches=data_helpers.batch_iter(list(x_test),FLAGS.batch_size,1,shuffle=False)
+        #collect the predictions here
+        all_predictions=[]
 #fill feedict with import data
+        for x_test_batch in batches:
+            batch_predictions=sess.run(predictions,feed_dict={input_x:x_test_batch,dropout_keep_prob:1.0})
+            all_predictions=np.concatenate([all_predictions,batch_predictions])
+#Accuracy
+if y_test is not None:
+    correct_predictions=float(sum(all_predictions==y_test))
+    print("Total number of test examples:{}".format(len(y_test)))
+    print("Accuracy:{}".format(correct_predictions/len(y_test)))
 
-#prediction accuracy
+# save data human_readable,注意下面numpy中两个数组串联要房子小括号内（）
+human_readable_data=np.column_stack((np.array(x_raw),all_predictions))
+out_path=os.path.join(FLAGS.checkpoint_dir,"","prediction.csv")
+print("Writing data to:{}".format(out_path))
+with open(out_path,"w") as f:
+    csv.writer(f).writerows(human_readable_data)
